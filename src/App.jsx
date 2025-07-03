@@ -1,17 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function App() {
-    const [todos, setTodos] = useState(['공부하기', '코딩하기', '운동하기'])
+    useEffect(() => {
+        fetch('https://dummyjson.com/todos')
+            .then((res) => res.json())
+            .then((res) => setTodos(res.todos))
+    }, [])
 
-    // Form 처리하는 함수
+    const [todoId, setTodoId] = useState(4)
+
+    const [todos, setTodos] = useState([])
+
     const handleOnSubmit = (e) => {
-        e.preventDefault() //  기본 동작 방지
-        const form = e.target // e.target은 form 요소를 가리킴
-        setTodos([form.todo.value, ...todos]) //todos 배열에 새 항목 추가
+        e.preventDefault()
+        const form = e.target
+
+        fetch('https://dummyjson.com/todos/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                todo: form.todo.value,
+                completed: false,
+                userId: 5,
+            }),
+        })
+            .then((res) => res.json())
+            .then(console.log)
+
+        // setTodos([{ id: todoId, todo: form.todo.value, completed: false }, ...todos])
+        // setTodoId(todoId + 1)
     }
 
-    const removeTodo = (selectedIndex) => {
-        setTodos(todos.filter((todo, index) => index != selectedIndex))
+    const removeTodo = (seletedId) => {
+        const filterTodos = todos.filter((todo) => todo.id != seletedId)
+        setTodos(filterTodos)
+    }
+
+    const toggleTodo = (seletedId) => {
+        const updateTodos = todos.map((todo) => (todo.id == seletedId ? { ...todo, completed: !todo.completed } : todo))
+        setTodos(updateTodos)
     }
 
     return (
@@ -21,9 +48,17 @@ function App() {
                 <button type="submit">등록</button>
             </form>
             <ul>
-                {todos.map((todo, i) => (
-                    <li key={i}>
-                        {todo} <button onClick={() => removeTodo(i)}>x</button>
+                {todos.map((todo) => (
+                    <li key={todo.id}>
+                        <input
+                            type="checkbox"
+                            onChange={() => {
+                                toggleTodo(todo.id)
+                            }}
+                            checked={todo.completed}
+                        />
+                        {JSON.stringify(todo.completed)} / {todo.id} / {todo.todo}
+                        <button onClick={() => removeTodo(todo.id)}>X</button>
                     </li>
                 ))}
             </ul>
